@@ -1,21 +1,24 @@
 import { type ClientSchema, a, defineData, defineFunction } from "@aws-amplify/backend";
 
-export const customDataSourceFunction = defineFunction({ entry: './customDataSource.ts' });
+const echoHandler = defineFunction({ entry: './echo-handler/handler.ts' });
 
 const schema = a.schema({
-  Todo: a
-    .model({
-      content: a.string(),
-    })
-    .authorization((allow) => [allow.guest()]),
+  EchoResponse: a.customType({
+    content: a.string(),
+    executionDuration: a.float(),
+  }),
 
-  myCustomDataSource: 
-  a.query()
-  .returns(a.string())
-  .handler(a.handler.function(customDataSourceFunction))
-  .authorization((allow) => [allow.guest()]),
+  echo: a
+    .query()
+    .arguments({ content: a.string() })
+    .returns(a.ref("EchoResponse"))
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(echoHandler)),
+
+  Todo: a
+    .model({ content: a.string(), })
+    .authorization((allow) => [allow.guest()]),
 })
-.authorization((allow) => [allow.resource(customDataSourceFunction)]);
 
 export type Schema = ClientSchema<typeof schema>;
 
